@@ -1,0 +1,26 @@
+[tool.poetry]
+name = "project-analyzer-agent"
+version = "0.1.0"
+description = "Multi-agent system for project analysis using LangGraph"
+authors = ["HammonD denispyshkin2007@gmail.com",
+            "",
+            ""]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.10"
+langgraph = "^0.1.0"
+langchain-openai = "^0.1.0"
+langchain-core = "^0.1.0"
+pydantic = "^2.0"
+python-dotenv = "^1.0"
+
+[tool.poetry.dev-dependencies]
+pytest = "^7.0"
+black = "^23.0"
+flake8 = "^6.0"
+mypy = "^1.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
