@@ -29,29 +29,28 @@ def main():
     while iteration <= 3:
         print(f"\n=== ИТЕРАЦИЯ {iteration} ===")
 
-        # Получаем состояние
         state = app.get_state(config)
 
-        # Показываем артефакт
         artifact = state.values.get('draft_artifact')
         if artifact:
             print("Название:", artifact.get('title', 'N/A'))
             print("Описание:", artifact.get('description', 'N/A'))
             print("Цели:", artifact.get('goals', []))
-            print("Требования:", artifact.get('functional_requirements', []))
+            print("Требования:", artifact.get('requirements', []))
 
-        # Проверяем завершение
-        if not state.next:
-            print("\n=== ПРОЕКТ УТВЕРЖДЁН ===")
-            break
+            feedback = input("\nОтзыв (Enter=OK, revise=доработать): ").strip()
 
-        feedback = input("\nОтзыв (Enter=OK, revise=доработать): ").strip()
-        if feedback.lower() == 'ok':
-            app.invoke({"user_has_provided_feedback": False}, config=config)
-        else:
-            app.invoke({"user_has_provided_feedback": True, "user_feedback": feedback}, config=config)
+            if feedback.lower() == 'ok':
+                app.invoke({"user_has_provided_feedback": False}, config=config)
+            else:
+                app.invoke({"user_has_provided_feedback": True, "user_feedback": feedback}, config=config)
 
-        iteration += 1
+            state = app.get_state(config)
+            if not state.next:
+                print("\n=== ПРОЕКТ УТВЕРЖДЁН ===")
+                break
+
+            iteration += 1
 
 
 if __name__ == "__main__":
