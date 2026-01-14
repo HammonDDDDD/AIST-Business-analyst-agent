@@ -4,7 +4,7 @@ from langgraph.checkpoint.memory import MemorySaver
 from state import ProjectState
 from nodes_analyst import analyst_node
 from nodes_critic import critic_node
-from nodes_human import human_node
+from human_nodes import human_node
 
 
 def critic_router(state: ProjectState) -> str:
@@ -83,6 +83,7 @@ def compile_graph():
     compiled_graph = graph.compile(
         checkpointer=checkpointer,
         interrupt_before=["human"],
+        interrupt_after=["human"],
     )
 
     return compiled_graph
