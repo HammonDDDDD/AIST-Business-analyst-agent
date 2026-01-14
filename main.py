@@ -36,7 +36,7 @@ def main():
             print("Название:", artifact.get('title', 'N/A'))
             print("Описание:", artifact.get('description', 'N/A'))
             print("Цели:", artifact.get('goals', []))
-            print("Требования:", artifact.get('requirements', []))
+            print("Требования:", artifact.get('functional_requirements', []))
 
             feedback = input("\nОтзыв (Enter=OK, revise=доработать): ").strip()
 

@@ -82,6 +82,8 @@ def compile_graph():
 
     compiled_graph = graph.compile(
         checkpointer=checkpointer,
+        interrupt_before=["human"],
+        interrupt_after=["human"],
     )
 
     return compiled_graph

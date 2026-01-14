@@ -22,7 +22,7 @@ class ProjectArtifact(BaseModel):
     goals: List[str] = Field(
         description="1-2 четко сформулированные цели"
     )
-    requirements: List[Requirement] = Field(
+    functional_requirements: List[Requirement] = Field(
         description="Функциональные требования (ФТ-1, ФТ-2, ...)"
     )
 
