@@ -6,13 +6,16 @@ from langchain_openai import ChatOpenAI
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import PydanticOutputParser
 from dotenv import load_dotenv
+
 load_dotenv()
 
 DEEPSEEK_API = os.getenv("DEEPSEEK_API_KEY")
 URL = os.getenv("DEEPSEEK_BASE_URL")
+
+
 class CriticDecision(BaseModel):
-    verdict: Literal["OK", "REVISE"] = Field(description="Вердикт: OK или REVISE")
-    critique: Optional[str] = Field(description="Текст замечаний (если REVISE)", default="")
+    verdict: Literal["OK", "REVISE"] = Field(description="Вердикт: OK (принять) или REVISE (отправить на доработку)")
+    critique: Optional[str] = Field(description="Текст замечаний (обязательно, если REVISE)", default="")
 
 
 def critic_node(state: dict):
@@ -20,30 +23,24 @@ def critic_node(state: dict):
     Агент-критик.
 
     Принимает:
-        - state['draft_artifact']: Черновик функциональных требований для проверки.
-        - state['iteration_count']: Текущий счетчик итераций .
+        - state['draft_artifact']: Черновик для проверки.
 
     Возвращает:
         - Обновленный state с ключами:
          "critic_verdict": "OK" или "REVISE".
-         "critic_feedback": Замечания или причина решения.
-         "iteration_count": Обновленный счетчик итераций.
+         "critic_feedback": Замечания.
+
+    ВАЖНО: Эта нода НЕ инкрементирует счетчик итераций. Это делает нода 'increment' в графе.
     """
 
     draft = state.get("draft_artifact")
-    iteration_count = state.get("iteration_count", 0)
+
     if not draft:
         return {
             "critic_verdict": "REVISE",
-            "critic_feedback": "Артефакт пустой",
-            "iteration_count": iteration_count
+            "critic_feedback": "Артефакт пустой или не был сгенерирован.",
         }
-    if iteration_count >= 3:
-        return {
-            "critic_verdict": "OK",
-            "critic_feedback": "Лимит итераций исчерпан",
-            "iteration_count": iteration_count
-        }
+
     llm = ChatOpenAI(
         model="deepseek-chat",
         base_url=URL,
@@ -52,20 +49,24 @@ def critic_node(state: dict):
     )
 
     parser = PydanticOutputParser(pydantic_object=CriticDecision)
-    system_prompt = """Ты - Старший Бизнес-аналитик. Твоя задача - валидировать Функциональные Требования (ФТ).
+
+    system_prompt = """Ты - Старший Бизнес-аналитик. Твоя задача - валидировать Функциональные Требования (ФТ) проекта.
 
     Твоя цель: Убедиться, что требования описывают ПОВЕДЕНИЕ системы (User Story), а не реализацию.
 
     КРИТЕРИИ ОЦЕНКИ:
-    1.ЗАПРЕЩЕНЫ технические детали: Нельзя писать про SQL, Python, REST API, JSON, эндпоинты, названия таблиц. Если это есть -> REVISE.
-    2.ЗАПРЕЩЕНА "вода": Фразы "сделать красиво", "быстро работать", "быть удобным" -> REVISE.
-    3.НУЖНА бизнес-логика: "Пользователь нажимает кнопку...", "Система рассчитывает...", "Система отправляет уведомление..." -> это OK.
+    1. ЗАПРЕЩЕНЫ технические детали: Нельзя писать про SQL, Python, REST API, JSON, эндпоинты, названия таблиц. Е��ли это есть -> REVISE.
+    2. ЗАПРЕЩЕНА "вода": Фразы "сделать красиво", "быстро работать", "быть удобным" -> REVISE.
+    3. НУЖНА бизнес-логика: "Пользователь нажимает кнопку...", "Система рассчитывает...", "Система отправляет уведомление..." -> это OK.
+    4. Cтруктура: Проверь, что заполнены все поля (Название, Описание, Цели, Требования).
 
     ВАЖНО:
-    - Если требование звучит как "Пользователь загружает файл резюме", это ОТЛИЧНОЕ требование. НЕ требуй указывать формат файла (.pdf/.csv) или метод API. Это задача разработчиков, а не аналитиков.
+    - Если требование звучит как "Пользователь загружает файл резюме", это ОТЛИЧНОЕ требование. НЕ требуй указывать формат файла (.pdf/.csv) или метод API. Это задача разработчиков.
     - Ставь OK, если требования понятны заказчику и не содержат кода.
 
-    Входные данные: {artifact_json}
+    Входные данные (JSON):
+    {artifact_json}
+
     {format_instructions}
     """
 
@@ -73,7 +74,7 @@ def critic_node(state: dict):
     chain = prompt | llm | parser
 
     try:
-        artifact_str = json.dumps(draft, ensure_ascii=False)
+        artifact_str = json.dumps(draft, ensure_ascii=False, indent=2)
     except:
         artifact_str = str(draft)
 
@@ -83,16 +84,18 @@ def critic_node(state: dict):
             "format_instructions": parser.get_format_instructions()
         })
 
-        new_iteration_count = iteration_count + 1 if decision.verdict == "REVISE" else iteration_count
+        print(f"\n[CRITIC] Verdict: {decision.verdict}")
+        if decision.verdict == "REVISE":
+            print(f"[CRITIC] Feedback: {decision.critique}")
 
         return {
             "critic_verdict": decision.verdict,
             "critic_feedback": decision.critique,
-            "iteration_count": new_iteration_count
         }
+
     except Exception as e:
+        print(f"Ошибка в critic_node: {e}")
         return {
             "critic_verdict": "REVISE",
-            "critic_feedback": f"Ошибка: {e}",
-            "iteration_count": iteration_count
+            "critic_feedback": f"Произошла техническая ошибка при валидации: {e}",
         }
