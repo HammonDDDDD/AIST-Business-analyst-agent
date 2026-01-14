@@ -51,7 +51,7 @@ def main():
                 f.write(md_text)
             print("Файл 'project_result.md' успешно сохранен")
 
-            feedback = input("\nОтзыв (OK=правок не требуется, revise=необходимо доработать): ").strip()
+            feedback = input("\nОтзыв (OK=правок не требуется").strip()
 
             if feedback.lower() == 'ok':
                 app.invoke({"user_has_provided_feedback": False}, config=config)

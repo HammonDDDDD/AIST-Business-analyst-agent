@@ -124,6 +124,10 @@ def run_system(project_description: str):
 if __name__ == "__main__":
     print("\n[TEST] Building graph...")
     app = compile_graph()
+    png_bytes = app.get_graph().draw_mermaid_png()
+
+    with open("graph.png", "wb") as f:
+        f.write(png_bytes)
 
     print("[TEST] Graph structure:")
     print(app.get_graph().draw_ascii())
