@@ -6,6 +6,17 @@ load_dotenv()
 
 
 def main():
+    """
+    Main entry point for the agent system workflow.
+        
+    This method initializes and runs an iterative project development cycle that combines automated analysis with human feedback. It sets up a graph application with an initial project state and processes the project through multiple iterations. In each cycle, the system generates a structured project artifact, presents it for user evaluation, collects feedback, and updates the project state accordingly. The process continues for up to 3 iterations or until the project receives final approval.
+    
+    Args:
+        None
+    
+    Returns:
+        None
+    """
     app = compile_graph()
     config = {"configurable": {"thread_id": "session_1"}}
 

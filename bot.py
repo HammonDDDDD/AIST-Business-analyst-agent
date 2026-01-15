@@ -17,7 +17,25 @@ user_sessions = {}
 
 
 def render_markdown(artifact: dict) -> str:
-    """Генерация текста для сохранения в файл (полный Markdown)"""
+    """
+    Generate complete Markdown documentation for project artifacts.
+    
+    This method creates structured documentation by extracting key project information
+    from artifact dictionaries and formatting it into a comprehensive Markdown document.
+    The generated documentation serves as a complete reference that captures project
+    goals, requirements, and descriptions in a standardized format suitable for
+    preservation and sharing.
+    
+    Args:
+        artifact (dict): A dictionary containing project artifact data with keys such
+                        as 'title', 'description', 'goals', and 'functional_requirements'.
+                        The dictionary should contain the necessary project metadata
+                        to generate meaningful documentation.
+    
+    Returns:
+        str: A formatted Markdown string containing the complete project documentation.
+             Returns "Нет данных" if the input artifact is empty or None.
+    """
     if not artifact: return "Нет данных"
 
     title = artifact.get('title', artifact.get('project_name', 'Проект'))
@@ -36,7 +54,24 @@ def render_markdown(artifact: dict) -> str:
 
 
 def render_message_text(artifact: dict) -> str:
-    """Генерация текста для сообщения в Telegram (упрощенное форматирование)"""
+    """
+    Генерация текста для сообщения в Telegram с упрощенным форматированием.
+    
+    Форматирует данные проекта в читаемый текст для отправки в мессенджер, 
+    структурируя информацию по ключевым разделам для удобного восприятия.
+    
+    Args:
+        artifact (dict): Словарь с данными проекта, содержащий информацию о названии,
+            описании, целях и функциональных требованиях.
+    
+    Returns:
+        str: Отформатированное текстовое сообщение с разделами проекта, готовое для отправки.
+            В случае отсутствия данных возвращает сообщение об ошибке.
+    
+    Why:
+        Метод преобразует структурированные данные проекта в удобочитаемый формат для 
+        быстрого ознакомления пользователей с ключевой информацией через мессенджер.
+    """
     if not artifact: return "⚠️ Данные отсутствуют."
 
     title = artifact.get('title', artifact.get('project_name', 'Проект'))
@@ -61,6 +96,22 @@ def render_message_text(artifact: dict) -> str:
 
 @bot.message_handler(commands=['start'])
 def send_welcome(message):
+    """
+    Sends a welcome message and initializes a user session when the /start command is received.
+    
+    WHY: This method establishes a new conversation context for each user, allowing the system to maintain state across multiple interactions and provide personalized assistance throughout the project development cycle.
+    
+    Args:
+        message: The incoming message object containing chat details.
+    
+    Initializes:
+        user_sessions[chat_id] (dict): A session dictionary for the user with keys:
+            - is_active (bool): Indicates if the user session is currently active
+            - thread_id (str): Unique identifier for the user's conversation thread
+    
+    Returns:
+        None
+    """
     chat_id = message.chat.id
     user_sessions[chat_id] = {"is_active": False, "thread_id": str(chat_id)}
 
@@ -72,6 +123,23 @@ def send_welcome(message):
 
 @bot.message_handler(func=lambda message: True)
 def handle_message(message):
+    """
+    Handles incoming user messages to manage iterative project feedback cycles for project development.
+    
+    This method serves as the core interaction handler for a collaborative project refinement process. It maintains session state to track project evolution through multiple revision cycles, allowing users to provide feedback and receive updated project artifacts until final approval.
+    
+    The method enables iterative refinement by:
+    - Starting new project cycles when users submit initial descriptions
+    - Processing user feedback to trigger successive revisions
+    - Managing approval flow when users accept the final version
+    - Maintaining session continuity throughout the feedback loop
+    
+    Args:
+        message: The incoming message object containing chat information and user input text
+    
+    Returns:
+        None: Responses are sent directly via the bot interface rather than returning values
+    """
     chat_id = message.chat.id
     user_text = message.text.strip()
 
