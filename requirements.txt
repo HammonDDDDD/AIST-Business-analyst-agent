@@ -1,0 +1,6 @@
+langchain_core==1.2.7
+langchain_openai==1.1.7
+langgraph==1.0.6
+pydantic==2.12.5
+pyTelegramBotAPI==4.29.1
+python-dotenv==1.2.1
