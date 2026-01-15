@@ -6,6 +6,19 @@ load_dotenv()
 
 
 def main():
+    """
+    Main entry point for the agent system simulation.
+    
+    This method orchestrates a multi-iteration workflow where an AI agent generates project artifacts and refines them through critique cycles. It facilitates collaborative improvement by integrating automated feedback mechanisms with optional human input to guide revisions toward higher quality outputs.
+    
+    The method executes up to 3 iterations of generation and critique cycles, saving intermediate results to a markdown file. It handles user feedback to determine whether further revisions are needed or if the artifact is approved.
+    
+    Args:
+        None
+    
+    Returns:
+        None
+    """
     app = compile_graph()
     config = {"configurable": {"thread_id": "session_1"}}
 

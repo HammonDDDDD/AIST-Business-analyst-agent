@@ -13,13 +13,23 @@ URL = os.getenv("DEEPSEEK_BASE_URL")
 
 def analyst_node(state: dict):
     """
-    Агент-аналитик.
-    Принимает:
-      - state['project_description']: Исходная идея пользователя.
-      - state['critic_feedback']: Замечания от критика.
-      - state['user_feedback']: Замечания от человека.
-    Возвращает:
-      - Обновленный state с ключом 'draft_artifact'.
+    Analyst agent that transforms project ideas into structured requirements through iterative refinement.
+    
+    This function serves as a business analysis component that converts initial project concepts
+    into well-defined specifications. It processes feedback from both AI critics and human reviewers
+    to iteratively improve the project artifact, ensuring requirements are concrete, measurable,
+    and focused on business logic rather than technical implementation details.
+    
+    Args:
+        state: A dictionary containing the current analysis state with the following keys:
+            - project_description: The original project idea or concept from the user
+            - draft_artifact: Optional existing project artifact to be refined
+            - critic_feedback: Optional feedback from AI critic for improvement
+            - user_feedback: Optional human feedback for refinement
+    
+    Returns:
+        dict: Updated state dictionary containing the key 'draft_artifact' with the refined
+              project specification in structured format
     """
     llm = ChatOpenAI(
         model="deepseek-chat",

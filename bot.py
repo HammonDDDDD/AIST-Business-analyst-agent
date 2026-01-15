@@ -17,7 +17,23 @@ user_sessions = {}
 
 
 def render_markdown(artifact: dict) -> str:
-    """Генерация текста для сохранения в файл (полный Markdown)"""
+    """
+    Generates complete Markdown text for project artifact documentation.
+    
+    This method converts project artifact data into a structured Markdown format suitable for file storage. It organizes project information including title, description, goals, and functional requirements into a readable document structure.
+    
+    Args:
+        artifact (dict): A dictionary containing project artifact data with keys such as:
+            - title: Project title (falls back to 'project_name' or 'Проект')
+            - description: Project description
+            - goals: List of project goals
+            - functional_requirements or requirements: List of requirement objects/dicts
+    
+    Returns:
+        str: Formatted Markdown text representing the project artifact, or "Нет данных" if artifact is empty
+    
+    The method creates documentation to preserve project specifications in a standardized format that can be easily shared, version-controlled, and reviewed by stakeholders.
+    """
     if not artifact: return "Нет данных"
 
     title = artifact.get('title', artifact.get('project_name', 'Проект'))
@@ -36,7 +52,20 @@ def render_markdown(artifact: dict) -> str:
 
 
 def render_message_text(artifact: dict) -> str:
-    """Генерация текста для сообщения в Telegram (упрощенное форматирование)"""
+    """
+    Генерация текста для сообщения в Telegram с упрощенным форматированием.
+    
+    Форматирует данные проекта в читабельный текст для отправки в мессенджер, 
+    структурируя ключевую информацию в едином формате для удобства восприятия.
+    
+    Args:
+        artifact (dict): Словарь с данными проекта, содержащий информацию о названии,
+                       описании, целях и функциональных требованиях.
+    
+    Returns:
+        str: Отформатированная текстовая строка с разделами заголовка, описания,
+             целей и требований проекта, готовая для отправки в Telegram.
+    """
     if not artifact: return "⚠️ Данные отсутствуют."
 
     title = artifact.get('title', artifact.get('project_name', 'Проект'))
@@ -61,6 +90,25 @@ def render_message_text(artifact: dict) -> str:
 
 @bot.message_handler(commands=['start'])
 def send_welcome(message):
+    """
+    Sends a welcome message and initializes a user session when the '/start' command is received.
+    
+    This method responds to the bot's start command by sending a greeting message that
+    introduces the AI Business Analyst bot and prompts the user to describe their project idea.
+    It initializes a user session to track conversation state and maintain context for iterative
+    feedback cycles between the user and the analysis system.
+    
+    Args:
+        message: The incoming message object containing the chat information.
+    
+    Initializes:
+        user_sessions[chat_id] (dict): A dictionary storing session data for the user, with keys:
+            is_active (bool): Indicates whether the user session is currently active.
+            thread_id (str): Unique identifier for the user's conversation thread, set to the chat ID.
+    
+    Returns:
+        None: This method does not return a value.
+    """
     chat_id = message.chat.id
     user_sessions[chat_id] = {"is_active": False, "thread_id": str(chat_id)}
 
@@ -72,6 +120,23 @@ def send_welcome(message):
 
 @bot.message_handler(func=lambda message: True)
 def handle_message(message):
+    """
+    Handles incoming user messages to manage iterative project development cycles.
+    
+    This method serves as the primary interface for user interaction with the project development workflow. It processes user input to either initiate new projects or provide feedback on existing ones, coordinating between the user and AI agents to refine project artifacts through multiple revision cycles.
+    
+    Args:
+        message: The incoming message object containing chat ID and user text.
+    
+    Returns:
+        None: This method does not return a value but sends responses directly via the bot.
+    
+    The method maintains session state to track active projects and manages two primary workflows:
+    - When no active session exists: Initializes a new project development cycle by capturing the user's initial project description and starting the AI analysis process.
+    - When a session is active: Processes user feedback to drive iterative improvements to the project artifact, continuing until the user approves the final version.
+    
+    Upon user approval (using confirmation keywords like 'ok'), the method generates and delivers the final project file while cleaning up the session. The system handles text length limitations by truncating long outputs and provides fallback error handling for failed operations.
+    """
     chat_id = message.chat.id
     user_text = message.text.strip()
 

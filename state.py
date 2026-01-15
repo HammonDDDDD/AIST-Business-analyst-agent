@@ -3,7 +3,10 @@ from pydantic import BaseModel, Field
 
 
 class Requirement(BaseModel):
-    """Одно функциональное требование"""
+    """
+    Одно функциональное требование
+    """
+
 
     id: str = Field(description="Уникальный идентификатор (ФТ-1, ФТ-2, ...)")
 
@@ -11,7 +14,10 @@ class Requirement(BaseModel):
 
 
 class ProjectArtifact(BaseModel):
-    """Итоговый артефакт проекта"""
+    """
+    Итоговый артефакт проекта
+    """
+
 
     title: str = Field(
         description="Название проекта"
@@ -29,12 +35,13 @@ class ProjectArtifact(BaseModel):
 
 class ProjectState(TypedDict):
     """
-    Общее состояние для всех узлов графа.
-
-    - analyst_node обновляет: draft_artifact, revision_count
-    - critic_node обновляет: critic_feedback, critic_verdict
-    - human_node обновляет: user_feedback, user_has_provided_feedback
+    A container for managing the state and data flow between nodes in a directed acyclic graph workflow.
+    
+        - analyst_node обновляет: draft_artifact, revision_count
+        - critic_node обновляет: critic_feedback, critic_verdict
+        - human_node обновляет: user_feedback, user_has_provided_feedback
     """
+
 
     # Текстовое описание идеи проекта на естественном языке (русский, 1-3 абзаца)
     project_description: str

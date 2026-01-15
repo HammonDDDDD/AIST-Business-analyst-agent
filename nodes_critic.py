@@ -14,23 +14,39 @@ URL = os.getenv("DEEPSEEK_BASE_URL")
 
 
 class CriticDecision(BaseModel):
+    """
+    A class representing a critic's decision with a verdict and critique.
+    
+        Class Attributes:
+        - verdict: The decision outcome.
+        - critique: The reasoning behind the decision.
+    """
+
     verdict: Literal["OK", "REVISE"] = Field(description="Вердикт: OK (принять) или REVISE (отправить на доработку)")
     critique: Optional[str] = Field(description="Текст замечаний (обязательно, если REVISE)", default="")
 
 
 def critic_node(state: dict):
     """
-    Агент-критик.
-
-    Принимает:
-        - state['draft_artifact']: Черновик для проверки.
-
-    Возвращает:
-        - Обновленный state с ключами:
-         "critic_verdict": "OK" или "REVISE".
-         "critic_feedback": Замечания.
-
-    ВАЖНО: Эта нода НЕ инкрементирует счетчик итераций. Это делает нода 'increment' в графе.
+    Validates a draft artifact against business analysis criteria to ensure quality and adherence to requirements.
+    
+    This function acts as a quality gate that evaluates draft artifacts based on predefined business
+    analysis standards. It checks for proper structure, business-focused language, and absence of
+    implementation details to maintain the artifact's focus on system behavior rather than technical
+    implementation.
+    
+    Args:
+        state (dict): The current state dictionary containing the draft artifact to validate.
+                     Must contain key 'draft_artifact' with the artifact data to be evaluated.
+    
+    Returns:
+        dict: Updated state dictionary with validation results containing:
+            - "critic_verdict" (str): Validation outcome - "OK" if artifact meets criteria,
+              "REVISE" if modifications are needed
+            - "critic_feedback" (str): Detailed feedback explaining validation decision,
+              including specific issues found and improvement suggestions
+    
+    Important: This node does not increment iteration counters - that is handled by the 'increment' node in the graph.
     """
 
     draft = state.get("draft_artifact")
