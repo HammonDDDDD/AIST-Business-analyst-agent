@@ -42,7 +42,7 @@ def critic_node(state: dict):
         }
 
     llm = ChatOpenAI(
-        model="deepseek-chat",
+        model="deepseek-reasoner",
         base_url=URL,
         api_key=DEEPSEEK_API,
         temperature=0.0

@@ -22,7 +22,7 @@ def analyst_node(state: dict):
       - Обновленный state с ключом 'draft_artifact'.
     """
     llm = ChatOpenAI(
-        model="deepseek-chat",
+        model="deepseek-reasoner",
         base_url=URL,
         api_key=DEEPSEEK_API,
         temperature=0.7
