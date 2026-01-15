@@ -62,9 +62,13 @@ def analyst_node(state: dict):
 
     Следуй этому стилю при генерации ответа.
     """
-
+    current_artifact = state.get("draft_artifact")
     user_message = f"Идея проекта: {state.get('project_description', '')}"
-
+    if current_artifact:
+        import json
+        artifact_str = json.dumps(current_artifact, ensure_ascii=False, indent=2)
+        user_message += f"\n\nТЕКУЩАЯ ВЕРСИЯ ПРОЕКТА:\n{artifact_str}"
+        user_message += "\n\nЗАДАЧА: Обнови текущую версию проекта с учетом замечаний ниже. НЕ переписывай весь проект с нуля, если это не требуется. Сохрани существующие требования, если они не противоречат правкам."
     critic_feedback = state.get("critic_feedback")
     user_feedback = state.get("user_feedback")
 

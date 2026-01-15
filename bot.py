@@ -17,7 +17,7 @@ user_sessions = {}
 
 
 def render_markdown(artifact: dict) -> str:
-    """Генерация текста для файла"""
+    """Генерация текста для сохранения в файл (полный Markdown)"""
     if not artifact: return "Нет данных"
 
     title = artifact.get('title', artifact.get('project_name', 'Проект'))
@@ -33,6 +33,30 @@ def render_markdown(artifact: dict) -> str:
         text += f"- **{r_id}**: {r_desc}\n"
 
     return text
+
+
+def render_message_text(artifact: dict) -> str:
+    """Генерация текста для сообщения в Telegram (упрощенное форматирование)"""
+    if not artifact: return "⚠️ Данные отсутствуют."
+
+    title = artifact.get('title', artifact.get('project_name', 'Проект'))
+
+    msg = f"📋 **{title}**\n\n"
+    msg += f"ℹ️ *Описание:*\n{artifact.get('description', 'Не указано')}\n\n"
+
+    msg += "🎯 *Цели:*\n"
+    for g in artifact.get('goals', []):
+        msg += f"— {g}\n"
+
+    msg += "\n⚙️ *Требования:*\n"
+    reqs = artifact.get('functional_requirements') or artifact.get('requirements') or []
+
+    for r in reqs:
+        r_id = r.get('id') if isinstance(r, dict) else getattr(r, 'id', 'N/A')
+        r_desc = r.get('description') if isinstance(r, dict) else getattr(r, 'description', '')
+        msg += f"• *{r_id}*: {r_desc}\n"
+
+    return msg
 
 
 @bot.message_handler(commands=['start'])
@@ -56,14 +80,40 @@ def handle_message(message):
 
     session = user_sessions[chat_id]
     thread_id = session["thread_id"]
-
     config = {"configurable": {"thread_id": thread_id}}
+
+    if session["is_active"] and user_text.lower() in ['ок', 'ok', 'хорошо', 'спасибо']:
+        bot.send_chat_action(chat_id, 'upload_document')
+
+        try:
+            current_state = app.get_state(config)
+            artifact = current_state.values.get('draft_artifact')
+
+            if artifact:
+                md_content = render_markdown(artifact)
+                filename = f"Project_{chat_id}.md"
+
+                with open(filename, "w", encoding="utf-8") as f:
+                    f.write(md_content)
+
+                with open(filename, "rb") as f:
+                    bot.send_document(chat_id, f, caption="✅ Проект утвержден! Вот ваш итоговый файл.")
+
+                os.remove(filename)
+            else:
+                bot.send_message(chat_id, "⚠️ Ошибка: Артефакт потерян. Начните заново с /start")
+
+        except Exception as e:
+            bot.send_message(chat_id, f"Ошибка при сохранении: {e}")
+
+        session["is_active"] = False
+        return
 
     bot.send_chat_action(chat_id, 'typing')
 
     try:
         if not session["is_active"]:
-            bot.reply_to(message, "🚀 Принято! Анализирую идею, консультирууюсь с Критиком... Это займет секунд 10-20.")
+            bot.reply_to(message, "🚀 Принято! Анализирую идею, консультируюсь с Критиком... Это займет секунд 10-20.")
 
             initial_state = {
                 "project_description": user_text,
@@ -78,11 +128,6 @@ def handle_message(message):
             session["is_active"] = True
 
         else:
-            if user_text.lower() in ['ок', 'ok', 'хорошо', 'спасибо']:
-                bot.reply_to(message, "✅ Проект утвержден! Рад был помочь.")
-                session["is_active"] = False
-                return
-
             bot.reply_to(message, f"🔄 Принято: '{user_text}'. Отправляю на доработку Аналитику...")
 
             app.invoke({
@@ -95,19 +140,20 @@ def handle_message(message):
         artifact = current_state.values.get('draft_artifact')
 
         if artifact:
-            md_content = render_markdown(artifact)
-            filename = f"Project_{chat_id}.md"
-            with open(filename, "w", encoding="utf-8") as f:
-                f.write(md_content)
-            with open(filename, "rb") as f:
-                bot.send_document(chat_id, f, caption="📂 Ваш проектный артефакт готов!")
+            msg_text = render_message_text(artifact)
+
+            if len(msg_text) > 4000:
+                msg_text = msg_text[:3500] + "\n\n... (Текст сокращен, полная версия будет в файле) ..."
+
+            try:
+                bot.send_message(chat_id, msg_text, parse_mode="Markdown")
+            except Exception as e:
+                bot.send_message(chat_id, msg_text)
 
             bot.send_message(chat_id,
-                             "Изучите файл выше ⬆️\n\n"
-                             "Если все ОК — напишите **'ОК'**.\n"
-                             "Если нужны правки — просто напишите, что изменить.")
-
-            os.remove(filename)
+                             "Выше текущая версия проекта ⬆️\n\n"
+                             "Если все нравится — напишите **'ОК'**, и я пришлю файл.\n"
+                             "Если нужны правки — напишите, что изменить.", parse_mode="Markdown")
         else:
             bot.reply_to(message, "⚠️ Что-то пошло не так, артефакт пустой. Попробуйте еще раз /start")
 
@@ -115,4 +161,6 @@ def handle_message(message):
         print(f"Error: {e}")
         bot.reply_to(message, f"Произошла ошибка: {e}")
 
+
+print("Бот запущен!")
 bot.infinity_polling()
